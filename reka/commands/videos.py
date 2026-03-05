@@ -1,4 +1,4 @@
-# ABOUTME: Implements the `reka videos` command group (upload, list, get, delete)
+# ABOUTME: Implements the `reka videos` command group (upload, list, get, delete, reindex)
 # ABOUTME: Supports --wait polling for upload indexing completion
 
 from pathlib import Path
@@ -95,4 +95,15 @@ def delete_video(
     """Delete a video by ID."""
     client = make_client()
     result = client.delete(f"/v1/videos/{video_id}")
+    emit_result(result)
+
+
+@app.command("reindex")
+@api_command
+def reindex_video(
+    video_id: Annotated[str, typer.Argument(help="Video ID to reindex")],
+) -> None:
+    """Reprocess and reindex a video."""
+    client = make_client()
+    result = client.post("/v1/videos/reprocess", json={"video_ids": [video_id]})
     emit_result(result)

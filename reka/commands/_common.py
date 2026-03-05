@@ -4,7 +4,7 @@
 from functools import wraps
 
 from reka.client import RekaClient
-from reka.config import DEFAULT_CONFIG_PATH, resolve_base_url, resolve_token
+from reka.config import DEFAULT_CONFIG_PATH, load_config, resolve_base_url, resolve_token
 from reka.output import ApiError, emit_error
 
 
@@ -18,7 +18,8 @@ def make_client() -> RekaClient:
             exit_code=2,
             error={"type": "authentication_error", "message": "No API token. Set REKA_API_TOKEN or run: reka configure --token <token>"},
         )
-    base_url = resolve_base_url(state.base_url, state.env)
+    config_file_url = load_config(DEFAULT_CONFIG_PATH).base_url
+    base_url = resolve_base_url(state.base_url, state.env, config_file_url)
     return RekaClient(
         base_url=base_url,
         token=token,

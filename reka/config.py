@@ -3,12 +3,12 @@
 
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 BASE_URLS = {
-    "prod": "https://prod.vision-agent.api.reka.ai",
+    "prod": "https://vision-agent.api.reka.ai",
     "staging": "https://staging.vision-agent.api.reka.ai",
 }
 
@@ -19,6 +19,7 @@ DEFAULT_CONFIG_PATH = Path.home() / ".reka" / "config.json"
 class Config:
     token: Optional[str] = None
     env: str = "prod"
+    base_url: Optional[str] = None
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH) -> Config:
@@ -28,6 +29,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> Config:
         return Config(
             token=data.get("token"),
             env=data.get("env", "prod"),
+            base_url=data.get("base_url"),
         )
     except Exception:
         return Config()
@@ -36,7 +38,10 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> Config:
 def save_config(config: Config, path: Path = DEFAULT_CONFIG_PATH) -> None:
     """Write config to disk, creating parent directories as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"token": config.token, "env": config.env}, indent=2))
+    data: dict = {"token": config.token, "env": config.env}
+    if config.base_url is not None:
+        data["base_url"] = config.base_url
+    path.write_text(json.dumps(data, indent=2))
 
 
 def resolve_token(
@@ -55,11 +60,14 @@ def resolve_token(
 def resolve_base_url(
     cli_flag: Optional[str],
     env: str,
+    config_file_url: Optional[str],
 ) -> str:
-    """Resolve base URL: CLI flag > REKA_BASE_URL env var > derived from env name."""
+    """Resolve base URL: CLI flag > REKA_BASE_URL env var > config file > derived from env name."""
     if cli_flag:
         return cli_flag
     env_url = os.environ.get("REKA_BASE_URL")
     if env_url:
         return env_url
+    if config_file_url:
+        return config_file_url
     return BASE_URLS.get(env, BASE_URLS["prod"])

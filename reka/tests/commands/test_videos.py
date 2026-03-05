@@ -1,5 +1,5 @@
 # ABOUTME: Tests for the videos command group
-# ABOUTME: Covers upload, list, get, and delete using CLI test runner
+# ABOUTME: Covers upload, list, get, delete, and reindex using CLI test runner
 
 import json
 
@@ -147,3 +147,29 @@ class TestVideosUploadUrl:
             BASE_ARGS + ["videos", "upload", "--url", "https://x.com/v.mp4", "--name", "t", "--no-index"],
         )
         assert captured["data"]["index"] == "false"
+
+
+class TestVideosReindex:
+    def test_sends_video_id_to_reprocess_endpoint(self, monkeypatch):
+        captured = {}
+
+        def fake_post(self_inner, path, json=None, **kwargs):
+            captured["path"] = path
+            captured["json"] = json
+            return {"status": "success", "message": "Reprocessing queued for 1 videos"}
+
+        monkeypatch.setattr("reka.client.RekaClient.post", fake_post)
+        result = runner.invoke(app, BASE_ARGS + ["videos", "reindex", "abc123"])
+        assert result.exit_code == 0
+        assert "/reprocess" in captured["path"]
+        assert "abc123" in captured["json"]["video_ids"]
+
+    def test_returns_response_as_json(self, monkeypatch):
+        def fake_post(self_inner, path, **kwargs):
+            return {"status": "success", "message": "Reprocessing queued for 1 videos"}
+
+        monkeypatch.setattr("reka.client.RekaClient.post", fake_post)
+        result = runner.invoke(app, BASE_ARGS + ["videos", "reindex", "abc123"])
+        assert result.exit_code == 0
+        data = json.loads(result.stdout)
+        assert data["status"] == "success"
