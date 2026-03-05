@@ -7,7 +7,7 @@ from typing import Annotated, Optional
 
 import typer
 
-from reka.commands import configure, generations, groups, images, qa, search, streams, videos
+from reka.commands import clip, configure, generations, groups, images, qa, search, streams, tag, videos
 from reka.output import ApiError, emit_error
 
 app = typer.Typer(
@@ -62,10 +62,12 @@ app.add_typer(configure.app, name="configure")
 app.add_typer(videos.app, name="videos")
 app.add_typer(search.app, name="search")
 app.add_typer(qa.app, name="qa")
+app.add_typer(tag.app, name="tag")
 app.add_typer(groups.app, name="groups")
 app.add_typer(images.app, name="images")
 app.add_typer(generations.app, name="generations")
 app.add_typer(streams.app, name="streams")
+app.add_typer(clip.app, name="clip")
 
 
 def _run() -> None:

@@ -2,6 +2,13 @@
 
 Command-line interface for the [Reka Vision Agent API](https://docs.reka.ai/vision/api-reference). Upload videos, search content, and ask questions — from a terminal or an AI agent.
 
+The Reka Vision Agent API is a managed service for uploading, processing, and analyzing videos with AI. It handles preprocessing, storage, and embeddings automatically. Key capabilities:
+- **Video management** — upload (by URL or file), retrieve, list, delete 
+- **Semantic search** — search video content by natural language query   
+- **Q&A** — ask questions about a video and get AI-generated answers     
+- **Tagging** — automatic metadata tag generation                        
+- **Clip generation** — extract shorter clips from longer source videos, and check on the status of the generation
+
 ## Installation
 
 ```bash
@@ -18,7 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/reka-ai/reka-cli/main/install.sh | 
 
 ```bash
 # Configure with your API token
-reka configure --token reka_...
+reka configure --token <your api key>
 
 # Upload a video and wait for indexing
 VIDEO_ID=$(reka videos upload --url https://example.com/clip.mp4 --name "clip" --wait | jq -r .video_id)
@@ -166,6 +173,21 @@ reka search hybrid --query <text> [--max-results N] [--video-ids id,id,...]
 
 ```bash
 reka qa --video-id <id> --question <text>
+```
+
+### tag
+
+```bash
+reka tag --video-id <id>
+```
+
+### clip
+
+```bash
+reka clip create --video-urls <url>[,<url>,...] [--prompt <text>] [--wait]
+reka clip list
+reka clip get <clip-id>
+reka clip delete <clip-id>
 ```
 
 ### groups
