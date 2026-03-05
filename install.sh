@@ -89,6 +89,39 @@ add_to_path() {
 add_to_path "$HOME/.bashrc"
 add_to_path "$HOME/.zshrc"
 
+# Install agent skill
+for skill_target in "$HOME/.claude/skills/reka-cli" "$HOME/.codex/skills/reka-cli" "$HOME/.agents/skills/reka-cli"; do
+    mkdir -p "$skill_target"
+    cat > "${skill_target}/SKILL.md" << 'EOF'
+---
+name: reka-cli
+description: Use the reka CLI to work with the Reka Vision Agent API — upload videos, search content, ask questions, and manage groups.
+---
+
+## What is the Reka Vision Agent API?
+
+The Reka Vision Agent API is a managed service for uploading, processing, and analyzing videos with AI.
+It handles preprocessing, storage, and embeddings automatically. Key capabilities:
+
+- **Video management** — upload (by URL or file), retrieve, list, delete
+- **Semantic search** — search video content by natural language query
+- **Q&A** — ask questions about a video and get AI-generated answers
+- **Tagging** — automatic metadata tag generation
+- **Clip generation** — extract shorter clips from longer source videos, and check on the status of the generation
+
+## Using the CLI
+
+Use the `reka` CLI. Run `reka --help` or `reka <command> --help` to discover flags.
+For deeper context, refer to the source code at https://github.com/reka-ai/reka-cli.
+
+- Output is JSON — pipe through `jq` to extract values
+- Use `--wait` for async operations (video upload/indexing) when you need the result before proceeding
+- Check exit codes to distinguish failure types (4 = not found, 2 = auth, 6 = rate limit, etc.) — don't parse stderr
+- Auth comes from `~/.reka/config.json` or `REKA_API_TOKEN`
+EOF
+    echo "Installed agent skill to ${skill_target}"
+done
+
 echo ""
 echo "reka ${VERSION} installed successfully."
 echo "Run 'reka --help' to get started (you may need to restart your shell or run: export PATH=\"\$HOME/.reka/bin:\$PATH\")"
