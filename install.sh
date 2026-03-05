@@ -109,15 +109,51 @@ It handles preprocessing, storage, and embeddings automatically. Key capabilitie
 - **Tagging** — automatic metadata tag generation
 - **Clip generation** — extract shorter clips from longer source videos, and check on the status of the generation
 
-## Using the CLI
+## Agent bootstrap
 
-Use the `reka` CLI. Run `reka --help` or `reka <command> --help` to discover flags.
-For deeper context, refer to the source code at https://github.com/reka-ai/reka-cli.
+Use the `reka` CLI directly. Always run with non-interactive flags only.
 
-- Output is JSON — pipe through `jq` to extract values
-- Use `--wait` for async operations (video upload/indexing) when you need the result before proceeding
-- Check exit codes to distinguish failure types (4 = not found, 2 = auth, 6 = rate limit, etc.) — don't parse stderr
-- Auth comes from `~/.reka/config.json` or `REKA_API_TOKEN`
+1. Ensure auth is present:
+   - `REKA_API_TOKEN` env var, or
+   - `reka configure --token <token>`
+2. Load machine-readable contract first:
+   - `reka meta --format json`
+3. Use `reka --help` / `reka <command> --help` only for human-readable inspection.
+
+## Canonical workflow
+
+```bash
+VIDEO_ID=$(reka videos upload --url "https://example.com/clip.mp4" --name "clip" --wait | jq -r .video_id)
+reka search --query "person at whiteboard" --video-ids "$VIDEO_ID"
+reka qa --video-id "$VIDEO_ID" --question "What is being discussed?"
+```
+
+## Contract for automation
+
+- Success payloads: JSON on stdout
+- Error payloads: JSON on stderr as `{"error": {...}}`
+- Do not parse human text; branch by exit code
+- Prefer `reka meta --format json` over help-text parsing for command discovery
+
+Exit codes:
+- `0` success
+- `1` usage error
+- `2` authentication error
+- `3` permission error
+- `4` not found
+- `5` validation/quota error
+- `6` rate limit
+- `7` server error
+- `8` timeout
+- `9` connection error
+
+## Reliability rules
+
+- Use `--wait` when a downstream step needs a terminal async result.
+- Prefer `--format json` (default) for all machine parsing.
+- Use `--timeout` and retry on exit `8`/`9`/`6` with backoff.
+- Auth resolution order: `--token` > `REKA_API_TOKEN` > `~/.reka/config.json`.
+- Base URL resolution: `--base-url` > `REKA_BASE_URL` > config `base_url` > `--env`.
 EOF
     echo "Installed agent skill to ${skill_target}"
 done

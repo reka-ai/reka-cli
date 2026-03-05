@@ -21,6 +21,16 @@ To install a specific version:
 curl -fsSL https://raw.githubusercontent.com/reka-ai/reka-cli/main/install.sh | bash -s v0.2.0
 ```
 
+### From source
+
+If you have [uv](https://docs.astral.sh/uv/) installed, you can install directly from this repo:
+
+```bash
+uv tool install .
+```
+
+This installs the `reka` command into uv's tool environment and makes it available on your PATH without needing to activate a virtualenv.
+
 ## Quick start
 
 ```bash
@@ -55,6 +65,16 @@ $ reka videos list | jq '.[].video_id'
 ```
 
 Use `--format text` for human-readable tables when debugging interactively.
+
+### Machine-readable CLI contract
+
+Use `reka meta --format json` to get a stable JSON description of:
+- commands and subcommands
+- flags/args, required fields, defaults, and env-var bindings
+- exit-code mapping
+- auth/base-url resolution order
+
+Use `--help` for human-readable docs; use `meta` for agent parsing.
 
 ### Predictable exit codes
 
@@ -152,6 +172,12 @@ reka configure --token reka_...          # save token for prod
 reka configure --token reka_... --env staging
 ```
 
+### meta
+
+```bash
+reka meta --format json
+```
+
 ### videos
 
 ```bash
@@ -219,7 +245,7 @@ reka groups delete <group-id>
 **Base URL override**: set `REKA_BASE_URL` or `--base-url` to point at a custom endpoint.
 
 **Environments**:
-- `prod` → `https://prod.vision-agent.api.reka.ai`
+- `prod` → `https://vision-agent.api.reka.ai`
 - `staging` → `https://staging.vision-agent.api.reka.ai`
 
 ---

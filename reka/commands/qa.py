@@ -1,5 +1,5 @@
 # ABOUTME: Implements the `reka qa` command for video question-answering
-# ABOUTME: Constructs messages array and POSTs to /v1/qa/chat
+# ABOUTME: Registers as a direct root command (not a nested command group)
 
 from typing import Annotated
 
@@ -7,10 +7,6 @@ import typer
 
 from reka.commands._common import api_command, emit_result, make_client
 
-app = typer.Typer(help="Ask questions about a video.", invoke_without_command=True)
-
-
-@app.callback(invoke_without_command=True)
 @api_command
 def qa(
     video_id: Annotated[str, typer.Option("--video-id", help="ID of the video to query")],
@@ -25,3 +21,7 @@ def qa(
     }
     result = client.post("/v1/qa/chat", json=body)
     emit_result(result)
+
+
+def register(root: typer.Typer) -> None:
+    root.command("qa", help="Ask questions about a video.")(qa)
