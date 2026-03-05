@@ -1,0 +1,91 @@
+# ABOUTME: GitHub Actions workflow for building and publishing reka CLI binaries
+# ABOUTME: Triggered on version tags; builds binaries for 4 platforms via PyInstaller
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin-arm64
+          - os: macos-13
+            platform: darwin-x64
+          - os: ubuntu-latest
+            platform: linux-x64
+          - os: ubuntu-24.04-arm
+            platform: linux-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Build binary
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: uv run pyinstaller --onefile --name "reka-${PLATFORM}" reka/main.py
+
+      - name: Compute SHA256 (macOS)
+        if: runner.os == 'macOS'
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          cd dist
+          shasum -a 256 "reka-${PLATFORM}" > "reka-${PLATFORM}.sha256"
+
+      - name: Compute SHA256 (Linux)
+        if: runner.os == 'Linux'
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          cd dist
+          sha256sum "reka-${PLATFORM}" > "reka-${PLATFORM}.sha256"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        with:
+          name: reka-${{ matrix.platform }}
+          path: |
+            dist/reka-${{ matrix.platform }}
+            dist/reka-${{ matrix.platform }}.sha256
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/reka-*
+          generate_release_notes: true
